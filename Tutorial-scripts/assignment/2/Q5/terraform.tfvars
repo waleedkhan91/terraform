@@ -1,0 +1,1 @@
+listofname = ["muhammad", "waleed", "khan"]
