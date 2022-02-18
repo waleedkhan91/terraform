@@ -58,7 +58,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     location              = "westus2"
     resource_group_name   = azurerm_resource_group.rg.name
     network_interface_ids = [azurerm_network_interface.myvm1nic.id]
-    size                  = "Standard_A2m_v2"
+    size                  = "Standard_D4_v3"
     #size                  = "Standard_DS3_v2"
 
     os_disk {
