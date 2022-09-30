@@ -1,0 +1,49 @@
+---
+- name: Change password as a non-root/non-sudoer user.
+#
+# Ansible's 'user' module can only change a password if it is ran as a root user or 'become' is used.
+# For a non-root user, when you run 'passwd', it asks for current password before you can enter a new one.
+# Workaround: Create a a temporary script that updates the password and run that script remoteley 
+#             and use 'no_log' directive to prevent passwords being visible in any log.
+#             Tested that passwords not visible in verbose output '-vvvvv' and not in 'history' of remote computers.
+#             The temporary script is deleted remotley automatically by 'script' module.
+# Note:
+# New password must comply with your passwd security policy.
+
+  hosts: all
+  gather_facts: no
+
+  vars_prompt:
+  - name: "curr_pass"
+    prompt: Type in current password
+    private: yes
+
+  - name: "new_pass"
+    prompt: Type in new password
+    private: yes
+    confirm: yes
+
+  ## If you need to *temporary* hard-code credentials, use below.
+  ## Delete after use or use vault if you want long-term storage.
+  #vars:
+  #- curr_pass: MyOldPass
+  #- new_pass: MyNewPass123!!
+
+  tasks:
+  - name: Create a temporary local script which will change the users password
+    copy:
+      dest: updatePassNonRootDynamic.sh
+      content: echo -e '{{curr_pass}}\n{{new_pass}}\n{{new_pass}}' | passwd
+    delegate_to: localhost
+    no_log: True
+    run_once: true
+
+  - name: Change password via temporary script on all hosts
+    script: updatePassNonRootDynamic.sh
+
+  - name: Remove the temporary local script
+    file:
+      path: updatePassNonRootDynamic.sh
+      state: absent
+    delegate_to: localhost
+    run_once: true
